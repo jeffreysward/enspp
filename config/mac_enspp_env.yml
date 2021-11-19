@@ -1,0 +1,23 @@
+name: enspp
+channels:
+  - conda-forge
+dependencies:
+  - cartopy
+  - h5py
+  - jupyter
+  - ncl
+  - nco
+  - netCDF4
+  - pip
+  - python=3.8
+  - pytest
+  - pyyaml
+  - rpy2
+  - scikit-learn
+  - scipy
+  - seaborn
+  - siphon
+  - wrf-python
+  - xarray
+  - pip:
+      - cdsapi
