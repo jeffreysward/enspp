@@ -1,4 +1,5 @@
 AUTHORS.md
+LICENSE
 README.md
 setup.py
 enspp.egg-info/PKG-INFO

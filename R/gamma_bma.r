@@ -3,7 +3,7 @@ library("ensembleBMA")
 fit_bma <- function(wspdtrain, n_ens_members = 5) {
 
     # Put the training and test data into an ensembleData object
-    train_ensd <- ensembleData(forecasts = wspdtrain[,4:(n_ens_members + 3)], 
+    train_ensd <- ensembleData(forecasts = wspdtrain[,3:(n_ens_members + 2)], 
                                dates = wspdtrain$Time, 
                                observations = wspdtrain$Obs, 
                                forecastHour = 0, 
@@ -19,7 +19,7 @@ fit_bma <- function(wspdtrain, n_ens_members = 5) {
 quant_bma <- function(bma_fit, wspdtest, n_ens_members = 5, quantiles = seq(from=0.01, to=0.99, by=0.01)) {
 
     # Put the training and test data into an ensembleData object
-    test_ensd <- ensembleData(forecasts = wspdtest[,4:(n_ens_members + 3)], 
+    test_ensd <- ensembleData(forecasts = wspdtest[,3:(n_ens_members + 2)], 
                               dates = wspdtest$Time, 
                               observations = wspdtest$Obs, 
                               forecastHour = 0, 
@@ -45,7 +45,7 @@ quant_bma <- function(bma_fit, wspdtest, n_ens_members = 5, quantiles = seq(from
 crps_bma <- function(bma_fit, wspdtest, n_ens_members = 5) {
     
     # Put the training and test data into an ensembleData object
-    test_ensd <- ensembleData(forecasts = wspdtest[,4:(n_ens_members + 3)], 
+    test_ensd <- ensembleData(forecasts = wspdtest[,3:(n_ens_members + 2)], 
                               dates = wspdtest$Time, 
                               observations = wspdtest$Obs, 
                               forecastHour = 0, 
