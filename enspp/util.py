@@ -14,15 +14,23 @@ def _get_r_module(path, module_name):
     return module
 
 
-def _wrfobs_xr2pd(wrfda, obsda, location='north', height=100):
+def _attach_obs(wrfda, obsda, location='north', height=100):
     # Get data for only north buoy at 100m and format
-    wrfda_loc = wrfda.sel(location=location, height=height)
+    if 'location' in wrfda.dims:
+        wrfda_loc = wrfda.sel(location=location, height=height)
+    else:
+        wrfda_loc = wrfda
     obsda_loc = obsda.sel(Time=slice(wrfda.Time[0], wrfda.Time[-1]), location=location, height=height)
 
     # Put the observations and the ensemble forecast into the same DataFrame (north buoy)
     data_loc = xr.concat([obsda_loc, wrfda_loc], 'model')
 
     return data_loc
+
+
+def _xr2pd(da):
+    df = da.T.to_pandas().dropna().reset_index()
+    return df
 
 
 def _fxda(quantiles, wrfda_loc):    
