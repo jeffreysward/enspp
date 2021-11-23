@@ -5,7 +5,7 @@ from .util import _get_r_module, _attach_obs, _xr2pd
 
 
 def fmt_training_data(wrfda, obsda):
-    # Get and format data for only south buoy at 100m
+    # Get and format data for only north buoy at 100m
     data_n = _attach_obs(wrfda, obsda, location='north', height=100)
     # Covert the xr.DataArray into a pd.DataFrame & remove NaNs
     data_n = _xr2pd(data_n)
@@ -24,8 +24,14 @@ def fmt_training_data(wrfda, obsda):
     return data
 
 
-def fmt_test_data():
-    pass
+def fmt_test_data(wrfda, obsda):
+    # We need an observation as a placeholder (it won't actually be used), 
+    # so we'll use the one from the north buoy
+    data = _attach_obs(wrfda, obsda, location='north', height=100)
+    # Covert the xr.DataArray into a pd.DataFrame & remove NaNs
+    data = _xr2pd(data)
+
+    return data
 
 
 

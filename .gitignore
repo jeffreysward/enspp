@@ -46,3 +46,4 @@ ei.oper.an*
 **/.pytest_cache/
 **/wrf_output*
 *.csv
+default*
