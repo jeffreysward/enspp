@@ -55,3 +55,17 @@ def _fxda(quantiles, wrfda_loc):
         ),
     )
     return fx
+
+
+def _get_ensdirs(date_string):
+    """
+    Get directory names for all ensemble members.
+    """
+    # ensdir1 = f'{date_string}_28mp4lw4sw2lsm5pbl1cu/'  # Lee 2017
+    ensdir2 = f'{date_string}_8mp1lw1sw2lsm1pbl1cu/'  # Draxl 2014a
+    # ensdir3 = f'{date_string}_8mp1lw1sw2lsm2pbl1cu/'  # Draxl 2014b
+    ensdir4 = f'{date_string}_8mp1lw1sw2lsm2pbl3cu/'  # Vernon 2018
+    ensdir5 = f'{date_string}_8mp4lw2sw2lsm5pbl3cu/'  # Optis 2021
+
+    # return [ensdir1, ensdir2, ensdir3, ensdir4, ensdir5]
+    return [ensdir2, ensdir4, ensdir5]

@@ -36,12 +36,13 @@ def fmt_test_data(wrfda, obsda):
     return data
 
 
-def get_bma_fit(train_data):
+def get_bma_fit(train_data, gamma_bma=None):
     # Activate pandas2ri
     pandas2ri.activate()
 
-    # Read the R gamma_bma module into Python
-    gamma_bma = _get_r_module('../R/gamma_bma.r', 'gamma_bma')
+    if gamma_bma is None:
+        # Read the R gamma_bma module into Python
+        gamma_bma = _get_r_module('../R/gamma_bma.r', 'gamma_bma')
 
     # Fit the BMA model 
     fit = gamma_bma.fit_bma(train_data, n_ens_members=5)
@@ -81,4 +82,3 @@ def bma_quantile_fx(fit, wrfda, obsda, gamma_bma=None, quantiles=np.arange(0.01,
             fx = xr.concat([fx, fx_we], 'south_north')
         
     return fx
-    
