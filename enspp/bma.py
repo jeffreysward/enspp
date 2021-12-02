@@ -73,6 +73,47 @@ def get_bma_fit(train_data, gamma_bma=None):
     
     return fit
 
+
+def read_fmt_fit_bma(t_init, obs, n_days=2, sim_len=4, datadir='../data/'):
+    """
+    Lorem ipsum
+    """
+    # Convert the initialization time to a Timestamp if it's not given as one
+    if type(t_init) != pd.Timestamp:
+        t_init = pd.to_datetime(t_init)
+
+    # Find the first training day
+    d1_training = t_init - pd.DateOffset(days=n_days)
+
+    # Specify the start dates  
+    start_dates = pd.date_range(d1_training, periods=n_days)
+
+    # Specify the end dates by specifying how long these simlulations should last
+    end_dates = start_dates + pd.DateOffset(days=sim_len)
+
+    for ii in range(0,len(start_dates)):
+        # Read in an format the training data
+        train_data_new = get_fmt_df(obs, start_dates[ii], end_dates[ii], datadir=datadir, type='train')
+
+        if ii == 0:
+            # Create the train_data DataFrame
+            train_data = train_data_new
+        else:
+            # Concat the new data into the same training DataFrame 
+            train_data = pd.concat([train_data, train_data_new], axis=0)
+
+    # Finally remove any data from after the WRF initialization time
+    train_data = train_data[train_data['Time'] < t_init]
+
+    # And reset the index
+    train_data = train_data.reset_index(drop=True)
+
+    # Fit the BMA parameters
+    fit = get_bma_fit(train_data)
+
+    return fit
+
+
 def get_crps(fit, test_data, n_ens_members=5, gamma_bma=None):
     """
     Wrapper function for the R crps_bma function in the gamma_bma module
