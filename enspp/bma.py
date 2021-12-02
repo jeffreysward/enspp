@@ -1,6 +1,7 @@
 from rpy2.robjects import pandas2ri
 import numpy as np
 import pandas as pd
+import wrfpywind.data_preprocess as pp
 import xarray as xr
 
 from .util import _get_r_module, _attach_obs, _xr2pd, _fxda
@@ -36,7 +37,30 @@ def fmt_test_data(wrfda, obsda):
     return data
 
 
+def get_fmt_df(obs, start_date, end_date, datadir='../data/', type='train'):
+    # Open the xarray Dataset contianing wind speed data for the entire domain 
+    # note that you must use a `Dataset` object for the `extract_buoy_da` function to work.
+    ensds = xr.open_dataset(f"{datadir}ensds_{start_date.strftime('%Y%m%d')}-{end_date.strftime('%d')}.nc")
+
+    # Get data only at the buoy locations
+    ensda = pp.extract_buoy_da(ensds, varname='wspd_wrf', locations=['south', 'north'])
+
+    # Combine ensemble data and training or test data into a pd.DataFrame in the correct format
+    if type == 'train':
+        fmt_df = fmt_training_data(ensda, obs)
+    elif type == 'test':
+        fmt_df = fmt_test_data(ensda, obs)
+    else:
+        print(f'{type} is invalid.')
+        raise ValueError
+    
+    return fmt_df
+
+
 def get_bma_fit(train_data, gamma_bma=None):
+    """
+    Wrapper function for the R fit_bma function in the gamma_bma module
+    """
     # Activate pandas2ri
     pandas2ri.activate()
 
@@ -48,6 +72,22 @@ def get_bma_fit(train_data, gamma_bma=None):
     fit = gamma_bma.fit_bma(train_data, n_ens_members=5)
     
     return fit
+
+def get_crps(fit, test_data, n_ens_members=5, gamma_bma=None):
+    """
+    Wrapper function for the R crps_bma function in the gamma_bma module
+    """
+    # Activate pandas2ri
+    pandas2ri.activate()
+
+    if gamma_bma is None:
+        # Read the R gamma_bma module into Python
+        gamma_bma = _get_r_module('../R/gamma_bma.r', 'gamma_bma')
+
+    # Calculate the CRPS
+    crps = gamma_bma.crps_bma(fit, test_data, n_ens_members=5)
+
+    return crps
 
 
 def bma_quantile_fx(fit, wrfda, obsda, gamma_bma=None, quantiles=np.arange(0.01, 1, 0.01)):
