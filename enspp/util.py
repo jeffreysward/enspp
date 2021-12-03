@@ -28,12 +28,24 @@ def _attach_obs(wrfda, obsda, location='north', height=100):
     return data_loc
 
 
-def _xr2pd(da):
-    df = da.T.to_pandas().dropna().reset_index()
+def _xr2pd(da, drop_na=True):
+    if drop_na:
+        df = da.T.to_pandas().dropna().reset_index()
+    else:
+        df = da.T.to_pandas().reset_index()
     return df
 
 
-def _fxda(quantiles, wrfda_loc):    
+def _fxda(quantiles, wrfda_loc):
+    try:
+        lon_vals = wrfda_loc.XLONG.values
+    except:
+        lon_vals = 999
+    try:
+        lat_vals = wrfda_loc.XLAT.values
+    except:
+        lat_vals = 999
+
     # Format the forecast and obs variables into xarray DataSets. 
     fx = xr.DataArray(
         data=[quantiles],
@@ -46,8 +58,8 @@ def _fxda(quantiles, wrfda_loc):
             Start_time=wrfda_loc.Time[0:1].values,
             Step_index=np.arange(0, len(wrfda_loc.Time), 1),
             Percentile=np.arange(1, quantiles.shape[1] + 1, 1),
-            XLONG=wrfda_loc.XLONG.values,
-            XLAT=wrfda_loc.XLAT.values
+            XLONG=lon_vals,
+            XLAT=lat_vals
         ),
         attrs=dict(
             description="Wind Speed 100m",

@@ -32,7 +32,7 @@ def fmt_test_data(wrfda, obsda):
     # so we'll use the one from the north buoy
     data = _attach_obs(wrfda, obsda, location='north', height=100)
     # Covert the xr.DataArray into a pd.DataFrame & remove NaNs
-    data = _xr2pd(data)
+    data = _xr2pd(data, drop_na=False)
 
     return data
 
@@ -131,7 +131,27 @@ def get_crps(fit, test_data, n_ens_members=5, gamma_bma=None):
     return crps
 
 
-def bma_quantile_fx(fit, wrfda, obsda, gamma_bma=None, quantiles=np.arange(0.01, 1, 0.01)):
+def quantile_fx(fit, wrfda_slice, obsda, gamma_bma=None, quantiles=np.arange(0.01, 1, 0.01)):
+    """
+    Create a quantile forcast using a previously-fit BMA model.  
+    """
+    if gamma_bma is None:
+        # Read the R gamma_bma module into Python
+        gamma_bma = _get_r_module('../R/gamma_bma.r', 'gamma_bma')
+
+    # Format the ensemble data for t_init
+    data_t = fmt_test_data(wrfda_slice, obsda)
+
+    # Extract the quantiles for t_init
+    q = gamma_bma.quant_bma(fit, data_t, n_ens_members=5, quantiles=quantiles)
+
+    # Format the quantiles into a DataArray
+    fx = _fxda(q, wrfda_slice)
+
+    return fx
+
+
+def quantile_fx_multiloc(fit, wrfda, obsda, gamma_bma=None, quantiles=np.arange(0.01, 1, 0.01)):
     """
     Create a quantile forcast using a previously-fit BMA model.  
     """
@@ -146,7 +166,7 @@ def bma_quantile_fx(fit, wrfda, obsda, gamma_bma=None, quantiles=np.arange(0.01,
         for jj in range(0, len(wrfda.XLONG)):
             # Select data for only one location
             wrfda_slice = wrfda.isel(south_north=ii, west_east=jj)
-            data_t = fmt_test_data(wrfda, obsda)
+            data_t = fmt_test_data(wrfda_slice, obsda)
             # Extract the quantiles using the BMA test fit
             q = gamma_bma.quant_bma(fit, data_t, n_ens_members=5, quantiles=quantiles)
             # Format the quantiles into a DataArray
