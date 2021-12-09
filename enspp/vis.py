@@ -9,7 +9,7 @@ from matplotlib import cm
 import stoc_solar.vis as ssvis
 
 def fan(fx=None, obs=None, p1=None, p2=None, t_issue='01/01/2018', n_days=4, fx_res='10T', title=None, 
-        cmap=cm.Greens, percentile_vals=None, fig_w=5, ylab=True, ylab_txt='Wind Speed (ms$^{-1}$)', 
+        cmap=cm.Greens, percentile_vals=None, fig_w=5, fig_h=5, ylab=True, ylab_txt='Wind Speed (ms$^{-1}$)', 
         show_fig=True, save_fig=False, fig_path='../data/plots/fan_plot.png', **kwargs):
     """
     Create a fan plot of a probabilistic forecast, and overlay the observation.
@@ -51,7 +51,7 @@ def fan(fx=None, obs=None, p1=None, p2=None, t_issue='01/01/2018', n_days=4, fx_
     :param fig_path: full path to save the figure.
     :type fig_path: `str`
     """
-    fig = plt.figure(figsize=(fig_w, fig_w))
+    fig = plt.figure(figsize=(fig_w, fig_h))
     ax = fig.add_subplot(111)
     if title is not None:
         ax.set_title(title, loc='right', fontsize=kwargs.get('titlefontsize', 20))

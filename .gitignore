@@ -47,3 +47,4 @@ ei.oper.an*
 **/wrf_output*
 *.csv
 default*
+**/.ipynb_checkpoints*
