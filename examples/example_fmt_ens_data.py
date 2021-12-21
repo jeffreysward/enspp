@@ -6,7 +6,7 @@ import wrfpywind.data_preprocess as dp
 datadir = '/share/mzhang/jas983/wrf_data/met4ene/wrfout/ARW/'
 
 # Specify the start dates  
-start_dates = pd.date_range('2019-12-02', periods=7)
+start_dates = pd.date_range('2019-12-09', periods=23)
 
 # Specify the end dates by specifying how long these simlulations should last
 end_dates = start_dates + pd.DateOffset(days=4)

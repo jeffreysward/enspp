@@ -16,26 +16,27 @@ fit_bma <- function(wspdtrain, n_ens_members = 5) {
     return(bma_fit)
 }
 
-quant_bma <- function(bma_fit, wspdtest, n_ens_members = 5, quantiles = seq(from=0.01, to=0.99, by=0.01)) {
+quant_bma <- function(bma_fit, wspdtest, n_ens_members = 5, quantiles = seq(from=0.01, to=0.99, by=0.01), type = "temporal") {
 
     # Put the training and test data into an ensembleData object
-    test_ensd <- ensembleData(forecasts = wspdtest[,3:(n_ens_members + 2)], 
-                              dates = wspdtest$Time, 
-                              observations = wspdtest$Obs, 
-                              forecastHour = 0, 
-                              initializationTime = "00", 
-                              exchangeable = NULL)
-
-    # Extract the quantiles
-    # if (n_quantiles == 99) { 
-    #     quant_bma<- ensembleBMA::quantileForecast(bma_fit, test_ensd, quantiles=seq(from=0.01, to=0.99, by=0.01))
-    # } else if (n_quantiles == 10) {
-    #     quant_bma<- ensembleBMA::quantileForecast(bma_fit, test_ensd, quantiles=seq(from=0.1, to=0.9, by=0.1))
-    # } else if  (n_quantiles == 3) {
-    #     quant_bma<- ensembleBMA::quantileForecast(bma_fit, test_ensd, quantiles=c(0.25, 0.5, 0.75))
-    # } else {
-    #     stop("Unsupported quantile number. Please choose from 3, 10, or, 99.")
-    # }
+    if (type == "temporal") {
+        test_ensd <- ensembleData(forecasts = wspdtest[,3:(n_ens_members + 2)], 
+                                dates = wspdtest$Time, 
+                                observations = wspdtest$Obs, 
+                                forecastHour = 0, 
+                                initializationTime = "00", 
+                                exchangeable = NULL)
+    } else if (type == "spatial") {
+        test_ensd <- ensembleData(forecasts = wspdtest[,2:(n_ens_members + 1)], 
+                                dates = wspdtest$Time, 
+                                latitude = wspdtest$XLAT, 
+                                longitude = wspdtest$XLONG,
+                                forecastHour = 0, 
+                                initializationTime = "00", 
+                                exchangeable = NULL)
+    } else {
+        stop("Invalid value for type variable. Use temporal or spatial.")
+    }
 
     quant_bma<- ensembleBMA::quantileForecast(bma_fit, test_ensd, quantiles=quantiles)
     
