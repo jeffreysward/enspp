@@ -1,5 +1,6 @@
 from rpy2.robjects.packages import STAP
 import numpy as np
+import pandas as pd
 import xarray as xr
 
 
@@ -66,6 +67,22 @@ def _fxda(quantiles, wrfda_loc):
             units="m s-1",
         ),
     )
+    return fx
+
+
+def _fxda_grid(quantiles, wspdgrid_unstacked, wrfda):
+    # Use the multi-index from the unstacked version of the gridded DataFrame to create the new DataFrame
+    fx = pd.DataFrame(quantiles, index=wspdgrid_unstacked.index, columns=np.array([10, 50, 90]))
+    # Stack the percentiles into the multi-index
+    fx = fx.stack(dropna=False)
+    # Convert the pd.DataFrame to a xr.DataArray
+    fx = fx.to_xarray()
+    # Rename the dimension that pandas created when stacking the percentiles
+    fx = fx.rename({'level_3':'Percentile'})
+    # Add the latitude and longitude information back to the DataArray
+    fx = fx.assign_coords(XLONG=(['south_north', 'west_east'], wrfda.XLONG.values))
+    fx = fx.assign_coords(XLAT=(['south_north', 'west_east'], wrfda.XLAT.values))
+
     return fx
 
 
