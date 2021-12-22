@@ -4,7 +4,7 @@ import pandas as pd
 import wrfpywind.data_preprocess as pp
 import xarray as xr
 
-from .util import _get_r_module, _attach_obs, _xr2pd, _fxda
+from .util import _get_r_module, _attach_obs, _xr2pd, _fxda, _fxda_grid
 
 
 def fmt_training_data(wrfda, obsda):
@@ -35,6 +35,21 @@ def fmt_test_data(wrfda, obsda):
     data = _xr2pd(data, drop_na=False)
 
     return data
+
+
+def fmt_grid_data(wrfda):
+    # Now, extract a the full grid for a single time slice and make it so that each ensemble member still contains's it's own column
+    # Note -- should still format the time variable here
+
+    # Get the latitude and longitude variables
+    XLAT = wrfda.to_dataframe().XLAT.unstack(0).iloc[:,0].rename('XLAT')
+    XLONG = wrfda.to_dataframe().XLONG.unstack(0).iloc[:,0].rename('XLONG')
+    # Unstack the model index 
+    wspdgrid_unstacked = wrfda.to_dataframe().wspd_wrf.unstack(0)
+    # Concat the latitude and longitude variables onto the raw member wind speed forecasts
+    wspdgrid = pd.concat([wspdgrid_unstacked, XLAT, XLONG], axis=1).reset_index(['south_north', 'west_east'], drop=True).reset_index('Time')
+    
+    return wspdgrid, wspdgrid_unstacked
 
 
 def get_fmt_df(obs, start_date, end_date, datadir='../data/', type='train'):
@@ -131,7 +146,7 @@ def get_crps(fit, test_data, n_ens_members=5, gamma_bma=None):
     return crps
 
 
-def quantile_fx(fit, wrfda_slice, obsda, gamma_bma=None, quantiles=np.arange(0.01, 1, 0.01)):
+def quantile_fx(fit, wrfda_slice, obsda, gamma_bma=None, quantiles=np.arange(0.01, 1, 0.01), type='temporal'):
     """
     Create a quantile forcast using a previously-fit BMA model.  
     """
@@ -140,13 +155,22 @@ def quantile_fx(fit, wrfda_slice, obsda, gamma_bma=None, quantiles=np.arange(0.0
         gamma_bma = _get_r_module('../R/gamma_bma.r', 'gamma_bma')
 
     # Format the ensemble data for t_init
-    data_t = fmt_test_data(wrfda_slice, obsda)
+    if type == 'temporal':
+        data_t = fmt_test_data(wrfda_slice, obsda)
+    elif type == 'spatial':
+        data_t, data_unstacked = fmt_grid_data(wrfda_slice)
+    else:
+        print(f'Invalid quantile forecast type. Use temporal or spatial.')
+        raise ValueError
 
     # Extract the quantiles for t_init
-    q = gamma_bma.quant_bma(fit, data_t, n_ens_members=5, quantiles=quantiles)
+    q = gamma_bma.quant_bma(fit, data_t, n_ens_members=5, quantiles=quantiles, type=type)
 
     # Format the quantiles into a DataArray
-    fx = _fxda(q, wrfda_slice)
+    if type == 'temporal':
+        fx = _fxda(q, wrfda_slice)
+    elif type == 'spatial':
+        fx = _fxda_grid(q, data_unstacked, wrfda_slice)
 
     return fx
 
