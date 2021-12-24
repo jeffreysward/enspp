@@ -44,10 +44,14 @@ def fmt_grid_data(wrfda):
     # Get the latitude and longitude variables
     XLAT = wrfda.to_dataframe().XLAT.unstack(0).iloc[:,0].rename('XLAT')
     XLONG = wrfda.to_dataframe().XLONG.unstack(0).iloc[:,0].rename('XLONG')
-    # Unstack the model index 
+    # Unstack the "model" index 
     wspdgrid_unstacked = wrfda.to_dataframe().wspd_wrf.unstack(0)
-    # Concat the latitude and longitude variables onto the raw member wind speed forecasts
-    wspdgrid = pd.concat([wspdgrid_unstacked, XLAT, XLONG], axis=1).reset_index(['south_north', 'west_east'], drop=True).reset_index('Time')
+    # Concat the latitude and longitude variables onto the raw member wind speed forecasts.
+    # The code allows for the inclusion of a "Time" index (correspoinding to one datetime) or not.
+    try:
+        wspdgrid = pd.concat([wspdgrid_unstacked, XLAT, XLONG], axis=1).reset_index(['south_north', 'west_east'], drop=True).reset_index('Time')
+    except KeyError:
+        wspdgrid = pd.concat([wspdgrid_unstacked, XLAT, XLONG], axis=1).reset_index(['south_north', 'west_east'], drop=True)
     
     return wspdgrid, wspdgrid_unstacked
 

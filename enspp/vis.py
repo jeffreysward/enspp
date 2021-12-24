@@ -4,9 +4,13 @@ import numpy as np
 import pandas as pd
 import seaborn as sns
 import xarray as xr
+import wrf as wrfpy
 import matplotlib.pyplot as plt
 from matplotlib import cm
 import stoc_solar.vis as ssvis
+import cartopy.crs as ccrs
+import cartopy.feature as cfeature
+import cartopy.io.shapereader as shpreader
 
 def fan(fx=None, obs=None, p1=None, p2=None, t_issue='01/01/2018', n_days=4, fx_res='10T', title=None, 
         cmap=cm.Greens, percentile_vals=None, fig_w=5, fig_h=5, ylab=True, ylab_txt='Wind Speed (ms$^{-1}$)', 
@@ -177,3 +181,65 @@ def fan(fx=None, obs=None, p1=None, p2=None, t_issue='01/01/2018', n_days=4, fx_
         plt.show()
     else:
         plt.close()
+
+
+def quantile_cn(fx, p, axis, proj_bounds, t_idx=0, add_cbar=True, plot_buoy=False):
+    """
+    Contour map of a specified quantile.
+    """
+    # Format date string and plot variable 
+    datestr = pd.Timestamp(fx.Time.values[0]).strftime('%Y-%m-%d %H:%M')
+    plot_var = fx.sel(Percentile=p).squeeze()
+
+    # Plot the 10th percentile wind speed across the domain
+    cn = axis.contourf(wrfpy.to_np(fx.XLONG), wrfpy.to_np(fx.XLAT), wrfpy.to_np(plot_var),
+                    np.linspace(0, 16, 121), transform=ccrs.PlateCarree(), cmap='viridis')
+
+    if plot_buoy:             
+        # Plot the buoy locations
+        axis.plot(-72.716692, 39.969278, transform=ccrs.PlateCarree(), markersize=8, marker='X', color='grey')
+        axis.plot(-73.428892, 39.546772, transform=ccrs.PlateCarree(), markersize=8, marker='X', color='grey')
+
+    # Format the projected bounds so they can be used in the xlim and ylim attributes
+    proj_xbounds = [proj_bounds[0, 0], proj_bounds[1, 0]]
+    proj_ybounds = [proj_bounds[0, 1], proj_bounds[1, 1]]
+
+    # Set the x and y limits
+    axis.set_xlim(proj_xbounds)
+    axis.set_ylim(proj_ybounds)
+
+    # Download and add the states, coastlines, and lakes
+    shapename = 'admin_1_states_provinces_lakes'
+    states_shp = shpreader.natural_earth(resolution='10m',
+                                    category='cultural', 
+                                    name=shapename)
+    # Add features to the maps
+    axis.add_geometries(
+            shpreader.Reader(states_shp).geometries(),
+            ccrs.PlateCarree(),
+            facecolor='none',
+            linewidth=.5, 
+            edgecolor="black"
+            )
+    # Note that the coastline is actually redundant in some cases,
+    # so will cause cartopy to issue a warning
+    axis.add_feature(cfeature.COASTLINE)
+
+    if add_cbar:
+        # Add color bars
+        cbar_ticks=(0, 4, 8, 12, 16)
+        cbar_tick_labels=[0, 4, 8, 12, 16]
+        cbar = plt.colorbar(cn,
+                        ax=axis,
+                        ticks=cbar_ticks,
+                        shrink=0.82,
+                        pad=0.04,
+                        label='Wind Speed ($m/s$)'
+                        )
+        cbar.ax.set_yticklabels(cbar_tick_labels)  # vertically oriented colorbar
+
+    # Add the axis title
+    tex = '$^{th}$'
+    axis.set_title(f'{datestr}  {p}{tex} Percentile', fontsize=12)
+    return cn
+    s
